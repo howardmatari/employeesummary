@@ -11,6 +11,7 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 const render = require("./lib/htmlRenderer");
 var teamMembers = [];
 const managerQuestions = [
+
     {   // Fill html with teamName.
         type: "input",
         message: "What is the name of this team/project?",
@@ -35,6 +36,11 @@ const managerQuestions = [
         type: "input",
         message: "What is the manager's office number?",
         name: "officeNumber"
+    },
+    {
+        type: "confirm",
+        name: "newEmployee",
+        message: "Would you like to add another team member?"
     }]
 
 const employeeQuestions = [
@@ -44,40 +50,98 @@ const employeeQuestions = [
             name: "employeeRole",
             choices: ["Intern", "Engineer"]
         },
+        {
+            type: "input",
+            message: "What is the employee's name?",
+            name: "employeeName"
+        },
+        {
+            type: "input",
+            message: "What is the employee's id?",
+            name: "employeeId"
+        },
+        {
+            type: "input",
+            message: "What is the employee's email?",
+            name: "employeeEmail"
+        }
 ]
 
+const engineerQuestions = [
+
+    {
+        type: "input",
+        message: "What is the Engineer's Github?",
+        name: "github",
+
+    },
+    {
+        type: "confirm",
+        name: "newEmployee",
+        message: "Would you like to add another team member?"
+    }]
+
+const internQuestions = [
+        {
+            type: "input",
+            message: "What's the Intern's school?",
+            name: "school",
+        
+        },
+        {
+            type: "confirm",
+            name: "newEmployee",
+            message: "Would you like to add another team member?"
+        }
+]
 
 
 function managerData() {
     inquirer.prompt(managerQuestions).then(function(answer){
             const manager = new Manager(answer.managerName,answer.managerID,answer.managerEmail,answer.officeNumber);
             teamMembers.push(manager)
-            inquirer.prompt(employeeQuestions).then(employeeAnswers=>{
-                // make an employee
-                if (employeeAnswers.employeeRole === "Intern"){
-            inquirer.prompt(internQuestions).then(internAnswers=>{
-                const intern = new Intern(answer.internName,answer.internID,answer.internEmail,answer.school);})
-                } else {
-            inquirer.prompt(engineerQuestions).then(engineerAnswers=>{
-                const engineer = new Engineer(answer.engineerName,answer.engineerID,answer.engineerEmail,answer.github);})
-                }
-                })
-                
-           
-
-
-
-
-            // const htmlString = render(teamMembers)
-            // fs.writeFile("team.html",htmlString,(err)=>{
-            //     if (err) throw err
-            // console.log("Message written to file")
-            // });
+            //console.log(answer)
+            checkIfNewEmployee(answer)
             
-            console.log(teamMembers);
         })
 }
 
+function addNewEmployee (){
+    inquirer.prompt(employeeQuestions).then(employeeAnswers=>{
+        // make an employee
+        if (employeeAnswers.employeeEmail !== null && employeeAnswers.employeeRole === "Intern"){
+            inquirer.prompt(internQuestions).then(internAnswers=>{
+                const intern = new Intern(employeeAnswers.employeeName,employeeAnswers.employeeId,employeeAnswers.employeeEmail,internAnswers.school);
+                teamMembers.push(intern)    
+                checkIfNewEmployee(internAnswers)
+            })
+        } 
+        if (employeeAnswers.employeeEmail !== null && employeeAnswers.employeeRole === "Engineer") {
+            inquirer.prompt(engineerQuestions).then(engineerAnswers=>{
+                const engineer = new Engineer(employeeAnswers.employeeName,employeeAnswers.employeeId,employeeAnswers.employeeEmail,engineerAnswers.github);
+                teamMembers.push(engineer)    
+                checkIfNewEmployee(engineerAnswers)
+            })
+        }
+    })
+}
+function checkIfNewEmployee(answer){
+    if (answer.newEmployee === true){
+        addNewEmployee()
+
+    }else{
+        renderAndSaveHtml()
+    }
+}
+function renderAndSaveHtml(){
+    const htmlString = render(teamMembers)
+    fs.writeFile("team.html",htmlString,(err)=>{
+        if (err) throw err
+        console.log("Message written to file")
+    });
+
+    console.log(teamMembers);
+}
 
 
 managerData()
